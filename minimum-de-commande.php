@@ -33,8 +33,12 @@ class Minimum_De_Commande {
 			return;
 		}
 
+		// Affiche le message dans le panier et bloque la soumission du checkout
+		add_action( 'woocommerce_check_cart_items',  array( $this, 'verifier_minimum' ) );
 		add_action( 'woocommerce_checkout_process',  array( $this, 'verifier_minimum' ) );
-		add_action( 'woocommerce_before_cart',        array( $this, 'afficher_notice_panier' ) );
+
+		// Remplace le bouton "Valider la commande" si le minimum n'est pas atteint
+		add_action( 'woocommerce_proceed_to_checkout', array( $this, 'bloquer_bouton_checkout' ), 1 );
 	}
 
 	public function notice_woocommerce_manquant() {
@@ -68,7 +72,7 @@ class Minimum_De_Commande {
 		}
 	}
 
-	public function afficher_notice_panier() {
+	public function bloquer_bouton_checkout() {
 		if ( ! WC()->cart ) {
 			return;
 		}
@@ -77,15 +81,17 @@ class Minimum_De_Commande {
 		$total   = WC()->cart->get_subtotal();
 
 		if ( $total < $minimum ) {
-			wc_add_notice(
-				sprintf(
-					/* translators: 1: montant minimum, 2: total panier */
-					__( 'Montant minimum de commande : %1$s (actuellement %2$s).', 'minimum-de-commande' ),
-					wc_price( $minimum ),
-					wc_price( $total )
-				),
-				'notice'
-			);
+			// Supprime le vrai bouton de checkout
+			remove_action( 'woocommerce_proceed_to_checkout', 'woocommerce_button_proceed_to_checkout', 20 );
+
+			// Affiche un bouton désactivé à la place
+			echo '<button class="checkout-button button alt" disabled style="opacity:0.5;cursor:not-allowed;width:100%;">'
+				. sprintf(
+					/* translators: %s: montant minimum */
+					esc_html__( 'Minimum de commande : %s', 'minimum-de-commande' ),
+					wp_strip_all_tags( wc_price( $minimum ) )
+				)
+				. '</button>';
 		}
 	}
 
