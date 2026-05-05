@@ -48,6 +48,10 @@ class Minimum_De_Commande {
 	}
 
 	public function verifier_minimum() {
+		if ( ! WC()->cart ) {
+			return;
+		}
+
 		$minimum = $this->get_montant_minimum();
 		$total   = WC()->cart->get_subtotal();
 
@@ -65,6 +69,10 @@ class Minimum_De_Commande {
 	}
 
 	public function afficher_notice_panier() {
+		if ( ! WC()->cart ) {
+			return;
+		}
+
 		$minimum = $this->get_montant_minimum();
 		$total   = WC()->cart->get_subtotal();
 
