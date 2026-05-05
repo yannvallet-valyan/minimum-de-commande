@@ -1,11 +1,9 @@
 <?php
 /**
- * Plugin Name: B-Mesure – Minimum de commande
- * Plugin URI:  https://b-mesure.fr
+ * Plugin Name: Minimum de commande
  * Description: Définit un montant minimum de commande HT (hors frais de port) et expose un réglage dans le menu WooCommerce.
  * Version:     1.0.0
- * Author:      B-Mesure
- * Text Domain: bmesure-minimum-commande
+ * Text Domain: minimum-commande
  * Requires Plugins: woocommerce
  */
 
@@ -15,11 +13,11 @@ defined( 'ABSPATH' ) || exit;
 // Helpers
 // ──────────────────────────────────────────────
 
-function bmesure_get_minimum(): float {
-    return (float) get_option( 'bmesure_order_minimum', 80 );
+function wmc_get_minimum(): float {
+    return (float) get_option( 'wmc_order_minimum', 80 );
 }
 
-function bmesure_notice( float $minimum, float $total ): string {
+function wmc_notice( float $minimum, float $total ): string {
     return sprintf(
         'Commande minimum de <strong>%s&nbsp;€ HT</strong>. Votre panier actuel est de <strong>%s&nbsp;€ HT</strong>.',
         number_format( $minimum, 2, ',', '&nbsp;' ),
@@ -32,11 +30,11 @@ function bmesure_notice( float $minimum, float $total ): string {
 // ──────────────────────────────────────────────
 
 add_action( 'woocommerce_check_cart_items', function () {
-    $minimum = bmesure_get_minimum();
+    $minimum = wmc_get_minimum();
     $total   = WC()->cart->get_subtotal();
 
     if ( $total < $minimum ) {
-        wc_add_notice( bmesure_notice( $minimum, $total ), 'error' );
+        wc_add_notice( wmc_notice( $minimum, $total ), 'error' );
     }
 } );
 
@@ -49,11 +47,11 @@ add_action( 'template_redirect', function () {
         return;
     }
 
-    $minimum = bmesure_get_minimum();
+    $minimum = wmc_get_minimum();
     $total   = WC()->cart->get_subtotal();
 
     if ( WC()->cart && $total > 0 && $total < $minimum ) {
-        wc_add_notice( bmesure_notice( $minimum, $total ), 'error' );
+        wc_add_notice( wmc_notice( $minimum, $total ), 'error' );
         wp_redirect( wc_get_cart_url() );
         exit;
     }
@@ -64,7 +62,7 @@ add_action( 'template_redirect', function () {
 // ──────────────────────────────────────────────
 
 add_action( 'woocommerce_checkout_process', function () {
-    $minimum = bmesure_get_minimum();
+    $minimum = wmc_get_minimum();
     $total   = WC()->cart->get_subtotal();
 
     if ( $total < $minimum ) {
@@ -83,14 +81,14 @@ add_action( 'woocommerce_checkout_process', function () {
 // ──────────────────────────────────────────────
 
 add_filter( 'woocommerce_get_settings_pages', function ( array $settings ): array {
-    $settings[] = new Bmesure_Minimum_Settings_Page();
+    $settings[] = new WMC_Minimum_Settings_Page();
     return $settings;
 } );
 
-class Bmesure_Minimum_Settings_Page extends WC_Settings_Page {
+class WMC_Minimum_Settings_Page extends WC_Settings_Page {
 
     public function __construct() {
-        $this->id    = 'bmesure_minimum';
+        $this->id    = 'wmc_minimum';
         $this->label = 'Minimum de commande';
         parent::__construct();
     }
@@ -101,13 +99,13 @@ class Bmesure_Minimum_Settings_Page extends WC_Settings_Page {
                 'title' => 'Minimum de commande',
                 'type'  => 'title',
                 'desc'  => 'Définissez le montant minimum HT (hors frais de port) requis pour valider une commande.',
-                'id'    => 'bmesure_minimum_section',
+                'id'    => 'wmc_minimum_section',
             ],
             [
                 'title'             => 'Montant minimum (€ HT)',
                 'type'              => 'number',
                 'desc'              => 'Le client ne pourra pas accéder au paiement si son panier HT est inférieur à cette valeur.',
-                'id'                => 'bmesure_order_minimum',
+                'id'                => 'wmc_order_minimum',
                 'default'           => '80',
                 'css'               => 'width:100px;',
                 'custom_attributes' => [
@@ -117,7 +115,7 @@ class Bmesure_Minimum_Settings_Page extends WC_Settings_Page {
             ],
             [
                 'type' => 'sectionend',
-                'id'   => 'bmesure_minimum_section',
+                'id'   => 'wmc_minimum_section',
             ],
         ];
     }
