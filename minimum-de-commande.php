@@ -64,38 +64,56 @@ function mdc_afficher_notice_panier() {
 	}
 }
 
-// Page de réglages dans l'admin WooCommerce
-add_filter( 'woocommerce_get_sections_products', 'mdc_ajouter_section' );
+// Page de réglages dédiée dans le menu WordPress (Réglages → Minimum de commande)
+add_action( 'admin_menu', 'mdc_ajouter_page_reglages' );
 
-function mdc_ajouter_section( $sections ) {
-	$sections['minimum_de_commande'] = __( 'Minimum de commande', 'minimum-de-commande' );
-	return $sections;
+function mdc_ajouter_page_reglages() {
+	add_options_page(
+		__( 'Minimum de Commande', 'minimum-de-commande' ),
+		__( 'Minimum de Commande', 'minimum-de-commande' ),
+		'manage_options',
+		'minimum-de-commande',
+		'mdc_afficher_page_reglages'
+	);
 }
 
-add_filter( 'woocommerce_get_settings_products', 'mdc_reglages', 10, 2 );
-
-function mdc_reglages( $settings, $current_section ) {
-	if ( 'minimum_de_commande' !== $current_section ) {
-		return $settings;
+function mdc_afficher_page_reglages() {
+	if ( ! current_user_can( 'manage_options' ) ) {
+		return;
 	}
 
-	return array(
-		array(
-			'title' => __( 'Minimum de commande', 'minimum-de-commande' ),
-			'type'  => 'title',
-			'id'    => 'mdc_section',
-		),
-		array(
-			'title'   => __( 'Montant minimum', 'minimum-de-commande' ),
-			'desc'    => __( 'Montant minimum requis pour passer une commande.', 'minimum-de-commande' ),
-			'id'      => 'mdc_montant_minimum',
-			'type'    => 'number',
-			'default' => '50',
-			'css'     => 'width:100px;',
-		),
-		array(
-			'type' => 'sectionend',
-			'id'   => 'mdc_section',
-		),
-	);
+	if ( isset( $_POST['mdc_montant_minimum'] ) && check_admin_referer( 'mdc_enregistrer' ) ) {
+		update_option( 'mdc_montant_minimum', floatval( $_POST['mdc_montant_minimum'] ) );
+		echo '<div class="notice notice-success"><p>' . esc_html__( 'Réglages enregistrés.', 'minimum-de-commande' ) . '</p></div>';
+	}
+
+	$montant = mdc_get_minimum();
+	?>
+	<div class="wrap">
+		<h1><?php esc_html_e( 'Minimum de Commande', 'minimum-de-commande' ); ?></h1>
+		<form method="post">
+			<?php wp_nonce_field( 'mdc_enregistrer' ); ?>
+			<table class="form-table">
+				<tr>
+					<th scope="row">
+						<label for="mdc_montant_minimum"><?php esc_html_e( 'Montant minimum (€)', 'minimum-de-commande' ); ?></label>
+					</th>
+					<td>
+						<input
+							type="number"
+							id="mdc_montant_minimum"
+							name="mdc_montant_minimum"
+							value="<?php echo esc_attr( $montant ); ?>"
+							min="0"
+							step="0.01"
+							style="width:100px;"
+						/>
+						<p class="description"><?php esc_html_e( 'Montant minimum requis pour passer une commande.', 'minimum-de-commande' ); ?></p>
+					</td>
+				</tr>
+			</table>
+			<?php submit_button( __( 'Enregistrer', 'minimum-de-commande' ) ); ?>
+		</form>
+	</div>
+	<?php
 }
