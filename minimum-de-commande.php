@@ -64,14 +64,15 @@ function mdc_afficher_notice_panier() {
 	}
 }
 
-// Page de réglages dédiée dans le menu WordPress (Réglages → Minimum de commande)
+// Page de réglages directement dans le menu WooCommerce
 add_action( 'admin_menu', 'mdc_ajouter_page_reglages' );
 
 function mdc_ajouter_page_reglages() {
-	add_options_page(
+	add_submenu_page(
+		'woocommerce',
 		__( 'Minimum de Commande', 'minimum-de-commande' ),
 		__( 'Minimum de Commande', 'minimum-de-commande' ),
-		'manage_options',
+		'manage_woocommerce',
 		'minimum-de-commande',
 		'mdc_afficher_page_reglages'
 	);
